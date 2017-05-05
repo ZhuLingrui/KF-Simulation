@@ -1,0 +1,47 @@
+% To predict a random constant， which is described in “An Introduction to
+% the Kalman Filter”. Here we will change the Q and R to see what influence
+% will happen.
+
+N = 100;
+A = 1;
+H = 1;
+w = normrnd(0,0.01,N,1);
+x = zeros(N,1);
+x(1) = 0.3453;
+for k = 1:N-1
+    x(k+1) = A*x(k) + w(k);
+end
+v = randn(N,1);
+z = H*x+v;
+
+x_est_priori = zeros(N,1);
+x_est_post = zeros(N,1);
+p_priori = zeros(N,1);
+p_post = zeros(N,1);
+K = zeros(N,1);
+
+Q = 1e-5;
+R = 0.01;
+p_priori(1) = 1;
+p_post(1) = 1;
+for i = 2:N
+    x_est_priori(i) = x_est_post(i-1);
+    p_priori(i) = p_post(i-1)+Q;
+    K(i) = p_priori(i)*H/(H*p_priori(i)*H+R);
+    x_est_post(i) = x_est_priori(i)+K(i)*(z(i) - H*x_est_priori(i));
+    p_post(i) = (1-K(i)*H)*p_priori(i);
+end
+
+t = 1:N;
+x_real = 0.3453*ones(N,1);
+figure;
+plot(t,x_real,'r',t,x_est_post,'b',t,V,'x');
+ylabel('Voltage');
+xlabel('Iteration')
+legend('Real value', 'Estimation', 'Noise');
+
+figure;
+plot(t,p_priori);
+axis([0 101 0 0.2]);
+xlabel('Iteration');
+ylabel('Error Covariance');
